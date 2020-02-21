@@ -15,6 +15,17 @@ from sklearn.cluster import KMeans, SpectralClustering
 
 
 class SEC:
+    """
+    Parameter:
+    @df: pd.DataFrame, including serval features about sample;
+    @remove: int or float, which we need to remove in similarity matrix, to make cluster better, defeat 0;
+    @n_sample: int, size of sample
+    @similarity_mat: np.ndarray, defeat initialize to a zero matrix
+
+    Return:
+    @similarity_mat: np.ndarray, let result of each clustering tranform into a matrix,
+    acculate every matrix as similarity matrix which shows the relation in samples
+    """
     def __init__(self, df, n_round, remove=0):
         self.df = df
         self.remove = remove
@@ -24,8 +35,9 @@ class SEC:
 
     def calculate(self):
 
+        # one round for one similarity matrix
+        # total n_round round
         for i in range(self.n_round):
-            # one round for one similarity matrix
             # initial a similarity matrix
             mat = np.zeros((self.n_sample, self.n_sample))
             # number of clusters is a random int between 5 and Radical n
@@ -34,7 +46,8 @@ class SEC:
             self.df['pre'] = km.fit_predict(self.df[['x', 'y']])
             Y = self.df['pre']
             clusters = set(Y)
-            # update similarity matrix
+            # update similarity matrix by result of k-means
+            # each round plus one minus n_round
             for cluster in clusters:
                 index = Y[Y == cluster].index
                 l = np.array(index).reshape(1, -1)
@@ -42,7 +55,7 @@ class SEC:
 
             self.similarity_mat += np.array(mat)
 
-        return self.df, self.similarity_mat
+        return self.similarity_mat
 
 
 if __name__ == '__main__':
@@ -51,7 +64,7 @@ if __name__ == '__main__':
     df = pd.read_csv(path + '_3Gaussians.csv', names=['x', 'y'])
 
     en = SEC(n_round=1000)
-    df, mat = en.calculate()
+    mat = en.calculate()
     # spectral clustering, parameter affinity='precomputed' means
     # that you could dentify your affinity matrix
     sc = SpectralClustering(n_clusters=4, affinity='precomputed', assign_labels='kmeans')
